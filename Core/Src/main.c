@@ -19,7 +19,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -52,6 +51,8 @@ float EncoderVel,EncoderRPM,ControlRPM,Error,SumError,LastError,Ki=0.5,Kp=80.0,K
 int PWMOUT = 3000;
 uint64_t Timestamp_Encoder = 0;
 /* USER CODE END PV */
+
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -125,24 +126,18 @@ int main(void)
 			Timestamp_Encoder = micros();
 			EncoderVel = (EncoderVel * 99 + EncoderVelocity_Update()) / 100.0;
 			EncoderRPM = ((EncoderRPM * 99) + (EncoderVel*60)/3072)/100.0;
-			if(ControlRPM >= 0)
-			{
-				Error = ControlRPM - EncoderRPM;
-			}
-			else
-			{
-				Error = -(ControlRPM - EncoderRPM);
-			}
+			Error = ControlRPM - EncoderRPM;
 			SumError+=Error;
 			PWMOUT = (Kp * Error) + (Ki * SumError) + Kd * (Error-LastError);
 			LastError = Error;
-			if(ControlRPM > 0)
+			if(PWMOUT > 0)
 			{
 				__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, PWMOUT);
 				__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
 			}
-			else if(ControlRPM < 0)
+			else if(PWMOUT < 0)
 			{
+				PWMOUT = PWMOUT * (-1);
 				__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 0);
 				__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, PWMOUT);
 			}
